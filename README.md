@@ -1,5 +1,16 @@
 # TwentyFortyEight
 
+Move and join the numbers with arrow keys. Get to 2048!
+
+## Roadmap
+
+Refactor field in field.service to be a one dimensional array.
+This array should contain a type 'tileInfo' that includes: value, x, y, previousX, previousY.
+A new tile component should be responsible of dispaying 'tileInfo'.
+x, y, previousX, previousY should be bassed to animations.ts to calculate animation.
+
+## Development info
+
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.11.
 
 ## Development server

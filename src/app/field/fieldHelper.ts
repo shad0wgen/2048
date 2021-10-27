@@ -1,3 +1,5 @@
+import { Direction } from './enums/direction';
+
 export class FieldHelper {
   public static createGrid(size: number, fill: any): any[][] {
     return Array.from(Array(size), () => Array(size).fill(fill));
@@ -26,5 +28,13 @@ export class FieldHelper {
   public static movingDistance(firstPosition: number, destPosition: number, merged: boolean): number {
     let result = firstPosition - destPosition;
     return result + Number(merged);
+  }
+
+  public static calcYDestIndex(direction: Direction, yIndex: number): number {
+    return direction === Direction.Up ? yIndex - 1 : direction === Direction.Down ? yIndex + 1 : yIndex;
+  }
+
+  public static calcXDestIndex(direction: Direction, xIndex: number): number {
+    return direction === Direction.Left ? xIndex - 1 : direction === Direction.Right ? xIndex + 1 : xIndex;
   }
 }
