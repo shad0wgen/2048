@@ -9,6 +9,8 @@ This array should contain a type 'tileInfo' that includes: value, x, y, previous
 A new tile component should be responsible of dispaying 'tileInfo'.
 x, y, previousX, previousY should be bassed to animations.ts to calculate animation.
 
+Add component for messages, "won"/"game over"
+
 ## Development info
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 12.2.11.

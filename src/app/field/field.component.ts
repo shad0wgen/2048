@@ -3,7 +3,7 @@ import { compile } from './animations';
 import { Direction } from './enums/direction';
 import { FieldService, size } from './field.service';
 import { FieldHelper } from './fieldHelper';
-import { takeWhile } from 'rxjs/operators';
+import { filter, takeWhile } from 'rxjs/operators';
 import { FieldState } from './interfaces/fieldState';
 import { FieldView } from './interfaces/fieldView';
 import { AnimationState } from './interfaces/animationState';
@@ -26,13 +26,13 @@ export class FieldComponent implements OnInit {
   public backgroundGrid = FieldHelper.createGrid(size, null);
   public componentActive = true;
 
-  // The field index layout. Zeroes in field are hidden in template.
-  //   0 1 2 3
-  // 0 * * * *
-  // 1 * * * *
-  // 2 * * * *
-  // 3 * * * *
-  // 3 * * * *
+  // The field layout. Zeroes in field are hidden in template.
+  // field: FieldState = [
+  //   [0,0,0,0],
+  //   [0,0,0,0],
+  //   [0,0,0,0],
+  //   [0,0,0,0],
+  // ]
 
   constructor(
     public fs: FieldService
@@ -45,6 +45,20 @@ export class FieldComponent implements OnInit {
       takeWhile(() => this.componentActive),
     ).subscribe(({ field, animations }) => {
       this.render(field, animations)
+    });
+
+    this.fs.hasWon$.pipe(
+      takeWhile(() => this.componentActive),
+      filter(hasWon => hasWon === true),
+    ).subscribe(() => {
+      alert('Congratulations, you won!')
+    });
+
+    this.fs.hasLost$.pipe(
+      takeWhile(() => this.componentActive),
+      filter(hasLost => hasLost === true),
+    ).subscribe(() => {
+      alert('Game over...')
     });
 
     this.fs.resetAnimations();

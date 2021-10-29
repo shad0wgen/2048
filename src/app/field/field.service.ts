@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { Direction } from './enums/direction';
 import { MergeMovement } from './enums/mergeMovement';
 import { FieldHelper } from './fieldHelper';
@@ -8,6 +8,7 @@ import { Coordinate } from './interfaces/coordinate';
 import { FieldState } from './interfaces/fieldState';
 
 export const size = 4;
+const winningNumber = 2048;
 
 @Injectable({
   providedIn: 'root'
@@ -15,6 +16,13 @@ export const size = 4;
 export class FieldService {
   private mergeGuard: Coordinate[];
   private field: FieldState = FieldHelper.createGrid(size, 0);
+  // Custom fieldstate, for debugging purposes
+  // private field: FieldState = [
+  //   [0,0,0,8],
+  //   [0,0,0,1024],
+  //   [0,0,0,1024],
+  //   [0,0,0,8],
+  // ]
   private animations: AnimationState = FieldHelper.createGrid(size, 'base');
   private fieldAnimationSource: BehaviorSubject<{
     field: FieldState, animations: AnimationState
@@ -22,6 +30,12 @@ export class FieldService {
   public readonly field$: Observable<{
     field: FieldState, animations: AnimationState
   }> = this.fieldAnimationSource.asObservable();
+  private hasWon = false;
+  private hasWonSource: Subject<boolean> = new Subject();
+  public readonly hasWon$: Observable<boolean> = this.hasWonSource.asObservable();
+  private hasLost = false;
+  private hasLostSource: Subject<boolean> = new Subject();
+  public readonly hasLost$: Observable<boolean> = this.hasLostSource.asObservable();
 
   constructor() { }
 
@@ -35,6 +49,8 @@ export class FieldService {
     }
     this.addNewNumber();
     this.fieldAnimationSource.next({ field: this.field, animations: this.animations });
+    this.hasWonSource.next(this.hasWon);
+    this.hasLostSource.next(this.hasLost);
   }
 
   private updateAnimations(yIndex: number, xIndex: number, moveDistance: number, direction: Direction): void {
@@ -148,25 +164,31 @@ export class FieldService {
     const yDestIndex = FieldHelper.calcYDestIndex(direction, yIndex);
     const xDestIndex = FieldHelper.calcXDestIndex(direction, xIndex);
     if (FieldHelper.isInBounds(xDestIndex, yDestIndex, size)) {
-      if (this.mergeGuard.find(c => c.x === xDestIndex && c.y === yDestIndex)) { // Already merged?
-        return MergeMovement.NotMoved;
-      } else {
-        if (!field[yDestIndex][xDestIndex]) { // Destination empty?
+
+      const isMerged = !!this.mergeGuard.find(c => c.x === xDestIndex && c.y === yDestIndex);
+      const destEmpty = !field[yDestIndex][xDestIndex];
+      const mergeable = field[yDestIndex][xDestIndex] === tileValue;
+      switch (true) {
+        case isMerged:
+          return MergeMovement.NotMoved;
+        case destEmpty:
           // Move to destination
           field[yDestIndex][xDestIndex] = tileValue;
           field[yIndex][xIndex] = 0;
           return MergeMovement.Moved;
-        } else if (field[yDestIndex][xDestIndex] === tileValue) { // Mergeable?
-          field[yDestIndex][xDestIndex] = FieldHelper.mergeNumber(field[yDestIndex][xDestIndex]);
+        case mergeable:
+          const mergedNumber = FieldHelper.mergeNumber(field[yDestIndex][xDestIndex]);
+          if (mergedNumber === winningNumber) {
+            this.hasWon = true;
+          }
+          field[yDestIndex][xDestIndex] = mergedNumber;
           field[yIndex][xIndex] = 0;
-          this.mergeGuard.push(<Coordinate>{ x: yDestIndex, y: xDestIndex }); // Mark as merged in this move
+          this.mergeGuard.push(<Coordinate>{ y: yDestIndex, x: xDestIndex }); // Mark as merged in this move
           return MergeMovement.Mergerd;
-        }
-        else {
-          // Not mergeable
-          return MergeMovement.NotMoved;
-        }
+        default:
+          return MergeMovement.NotMoved; // Not mergeable
       }
+
     }
     else {
       // Out of bounds
@@ -177,7 +199,7 @@ export class FieldService {
   public addNewNumber() {
     let emptyCoordinates = this.getEmptyCoordinates();
     if (!this.movesAvailable(emptyCoordinates)) {
-      alert('Game over!');
+      this.hasLost = true;
     }
     const randomIndex = Math.floor(Math.random() * emptyCoordinates.length);
     if (emptyCoordinates.length) {
