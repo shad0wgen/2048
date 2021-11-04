@@ -21,12 +21,8 @@ export class FieldHelper {
     return (y >= 0 && y < size && x >= 0 && x < size);
   }
 
-  public static mergeNumber(number: number): number {
-    return number ? number *= 2 : 0;
-  }
-
-  public static movingDistance(firstPosition: number, destPosition: number, merged: boolean): number {
-    let result = firstPosition - destPosition;
+  public static movingDistance(startPosition: number, destPosition: number, merged: boolean): number {
+    let result = startPosition - destPosition;
     return result + Number(merged);
   }
 
