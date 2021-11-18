@@ -18,9 +18,9 @@ export class FieldService {
   private field: FieldState = FieldHelper.createGrid(size, 0);
   // Custom fieldstate, for debugging purposes
   // private field: FieldState = [
-  //   [2,4,2,4],
-  //   [4,2,4,2],
-  //   [2,4,2,4],
+  //   [2,4,8,4],
+  //   [4,2,16,4],
+  //   [2,4,2,8],
   //   [0,2,4,2],
   // ]
   private animations: AnimationState = FieldHelper.createGrid(size, 'base');
@@ -176,40 +176,28 @@ export class FieldService {
 
   private movesAvailable(emptyCoordinates: Coordinate[]): boolean {
     let result = false;
-    let matchesCount = 0;
     if (emptyCoordinates.length > 0) {
       result = true;
     } else {
       // Check the field for mergeable numbers
       for (let x = 0; x < size; x++) {
         for (let y = 0; y < size; y++) {
-          matchesCount += this.neighbourTileMatches(<Coordinate>{ x: x, y: y });
+          if (this.neighbourTileMatches(<Coordinate>{ x: x, y: y })) {
+            result = true;
+          };
         }
       }
-    }
-    if (matchesCount) {
-      result = true;
     }
     return result;
   }
 
-  private neighbourTileMatches(c: Coordinate): number { // Check all neighbouring tiles for matches. Return 1 if match
-    for (let x = Math.max(0, c.x - 1); x <= Math.min(c.x + 1, size - 1); x++) { // Check beside
-      if (x === c.x) {
-        continue; // Don't check startingpoint
-      }
-      if (this.field[c.y][x] === this.field[c.y][c.x]) {
-        return 1;
-      }
-    }
-    for (let y = Math.max(0, c.y - 1); y <= Math.min(c.y + 1, size - 1); y++) { // Check above and below
-      if (y === c.y) {
-        continue; // Don't check startingpoint
-      }
-      if (this.field[y][c.x] === this.field[c.y][c.x]) {
-        return 1;
-      }
-    }
-    return 0;
+  private neighbourTileMatches(c: Coordinate): boolean { // Check neighbouring right and below tiles for matches.
+    const onRightColumn = c.x + 1 >= size;
+    const onBottomRow = c.y + 1 >= size;
+
+    const tileToMatch = this.field[c.y][c.x];
+    const rightNeighbour = onRightColumn ? - 1 : this.field[c.y][c.x + 1];
+    const belowNeighbour = onBottomRow ? - 1 : this.field[c.y + 1][c.x];
+    return tileToMatch === rightNeighbour || tileToMatch === belowNeighbour;
   }
 }
